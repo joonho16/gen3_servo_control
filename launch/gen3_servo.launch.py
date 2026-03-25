@@ -31,6 +31,8 @@ def launch_setup(context, *args, **kwargs):
     control_hz = float(LaunchConfiguration("control_hz").perform(context))
     gain = float(LaunchConfiguration("gain").perform(context))
     gain_angular = float(LaunchConfiguration("gain_angular").perform(context))
+    gain_d = float(LaunchConfiguration("gain_d").perform(context))
+    gain_d_angular = float(LaunchConfiguration("gain_d_angular").perform(context))
     max_joint_vel = float(LaunchConfiguration("max_joint_vel").perform(context))
     max_linear_vel = float(LaunchConfiguration("max_linear_vel").perform(context))
     max_angular_vel = float(LaunchConfiguration("max_angular_vel").perform(context))
@@ -87,6 +89,8 @@ def launch_setup(context, *args, **kwargs):
                 "control_hz": control_hz,
                 "gain": gain,
                 "gain_angular": gain_angular,
+                "gain_d": gain_d,
+                "gain_d_angular": gain_d_angular,
                 "max_joint_vel": max_joint_vel,
                 "max_linear_vel": max_linear_vel,
                 "max_angular_vel": max_angular_vel,
@@ -132,6 +136,8 @@ def generate_launch_description():
         DeclareLaunchArgument("control_hz", default_value="100.0"),
         DeclareLaunchArgument("gain", default_value="2.0"),
         DeclareLaunchArgument("gain_angular", default_value="25.0"),
+        DeclareLaunchArgument("gain_d", default_value="0.1"),
+        DeclareLaunchArgument("gain_d_angular", default_value="5.0"),
         DeclareLaunchArgument("max_joint_vel", default_value="0.5"),
         DeclareLaunchArgument("max_linear_vel", default_value="1.0"),
         DeclareLaunchArgument("max_angular_vel", default_value="30.0"),

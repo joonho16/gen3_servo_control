@@ -137,6 +137,8 @@ class ServoJointBridge(Node):
         self.declare_parameter('input_mode', 'joint')
         self.declare_parameter('gain', 1.0)
         self.declare_parameter('gain_angular', -1.0)
+        self.declare_parameter('gain_d', 0.0)
+        self.declare_parameter('gain_d_angular', -1.0)
         self.declare_parameter('joint_names', [
             'joint_1', 'joint_2', 'joint_3', 'joint_4',
             'joint_5', 'joint_6', 'joint_7'
@@ -155,6 +157,9 @@ class ServoJointBridge(Node):
         self.gain = self.get_parameter('gain').value
         gain_ang = self.get_parameter('gain_angular').value
         self.gain_angular = gain_ang if gain_ang > 0 else self.gain
+        self.gain_d = self.get_parameter('gain_d').value
+        gain_d_ang = self.get_parameter('gain_d_angular').value
+        self.gain_d_angular = gain_d_ang if gain_d_ang >= 0 else self.gain_d
         self.joint_names = self.get_parameter('joint_names').value
         self.delta_threshold = self.get_parameter('delta_threshold').value
         self.pos_threshold = self.get_parameter('pos_threshold').value
@@ -168,6 +173,8 @@ class ServoJointBridge(Node):
         self.current_positions = {}
         self.goal_positions = {}
         self.goal_pose = None
+        self._prev_pos_error = np.zeros(3)
+        self._prev_rot_err = np.zeros(3)
 
         # TF2 for current EE pose
         self.tf_buffer = tf2_ros.Buffer()
@@ -227,6 +234,10 @@ class ServoJointBridge(Node):
                 self.rot_threshold = p.value
             elif p.name == 'delta_threshold':
                 self.delta_threshold = p.value
+            elif p.name == 'gain_d':
+                self.gain_d = p.value
+            elif p.name == 'gain_d_angular':
+                self.gain_d_angular = p.value if p.value >= 0 else self.gain_d
         return SetParametersResult(successful=True)
 
     def _build_kdl_chain(self, urdf_string):
@@ -305,6 +316,8 @@ class ServoJointBridge(Node):
     def goal_pose_cb(self, msg: PoseStamped):
         self.goal_pose = msg
         self.input_mode = 'pose'
+        self._prev_pos_error = np.zeros(3)
+        self._prev_rot_err = np.zeros(3)
 
     # ── Control loop ──────────────────────────────────────────────────
 
@@ -390,12 +403,20 @@ class ServoJointBridge(Node):
         rot_err_norm = np.linalg.norm(rot_err_vec)
 
         if pos_err_norm < self.pos_threshold and rot_err_norm < self.rot_threshold:
+            self._prev_pos_error = np.zeros(3)
+            self._prev_rot_err = np.zeros(3)
             self.twist_pub.publish(Twist())
             return
 
-        # P-controller (base frame)
-        lin_vel_base = self.gain * pos_error
-        ang_vel_base = self.gain_angular * rot_err_vec
+        # PD-controller (base frame)
+        dt = 1.0 / self.control_hz
+        d_pos = (pos_error - self._prev_pos_error) / dt
+        d_rot = (rot_err_vec - self._prev_rot_err) / dt
+        self._prev_pos_error = pos_error.copy()
+        self._prev_rot_err = rot_err_vec.copy()
+
+        lin_vel_base = self.gain * pos_error + self.gain_d * d_pos
+        ang_vel_base = self.gain_angular * rot_err_vec + self.gain_d_angular * d_rot
 
         # Transform base frame -> tool frame
         qx, qy, qz, qw = cur_quat
