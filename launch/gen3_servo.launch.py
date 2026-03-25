@@ -27,13 +27,11 @@ from moveit_configs_utils import MoveItConfigsBuilder
 
 
 def launch_setup(context, *args, **kwargs):
-    input_mode = LaunchConfiguration("input_mode").perform(context)
     control_hz = float(LaunchConfiguration("control_hz").perform(context))
     gain = float(LaunchConfiguration("gain").perform(context))
     gain_angular = float(LaunchConfiguration("gain_angular").perform(context))
     gain_d = float(LaunchConfiguration("gain_d").perform(context))
     gain_d_angular = float(LaunchConfiguration("gain_d_angular").perform(context))
-    max_joint_vel = float(LaunchConfiguration("max_joint_vel").perform(context))
     max_linear_vel = float(LaunchConfiguration("max_linear_vel").perform(context))
     max_angular_vel = float(LaunchConfiguration("max_angular_vel").perform(context))
 
@@ -85,24 +83,17 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             moveit_config.robot_description,
             {
-                "input_mode": input_mode,
                 "control_hz": control_hz,
                 "gain": gain,
                 "gain_angular": gain_angular,
                 "gain_d": gain_d,
                 "gain_d_angular": gain_d_angular,
-                "max_joint_vel": max_joint_vel,
                 "max_linear_vel": max_linear_vel,
                 "max_angular_vel": max_angular_vel,
-                "delta_threshold": 0.001,
                 "pos_threshold": 0.001,
                 "rot_threshold": 0.01,
                 "base_link": "base_link",
                 "tip_link": "end_effector_link",
-                "joint_names": [
-                    "joint_1", "joint_2", "joint_3", "joint_4",
-                    "joint_5", "joint_6", "joint_7",
-                ],
             },
         ],
         output="screen",
@@ -131,14 +122,12 @@ def generate_launch_description():
         DeclareLaunchArgument("robot_ip", description="IP address of the robot"),
         DeclareLaunchArgument("use_fake_hardware", default_value="false"),
         DeclareLaunchArgument("use_internal_bus_gripper_comm", default_value="true"),
-        DeclareLaunchArgument("launch_rviz", default_value="true"),
-        DeclareLaunchArgument("input_mode", default_value="joint"),
+        DeclareLaunchArgument("launch_rviz", default_value="false"),
         DeclareLaunchArgument("control_hz", default_value="100.0"),
         DeclareLaunchArgument("gain", default_value="2.0"),
         DeclareLaunchArgument("gain_angular", default_value="25.0"),
         DeclareLaunchArgument("gain_d", default_value="0.1"),
         DeclareLaunchArgument("gain_d_angular", default_value="5.0"),
-        DeclareLaunchArgument("max_joint_vel", default_value="0.5"),
         DeclareLaunchArgument("max_linear_vel", default_value="1.0"),
         DeclareLaunchArgument("max_angular_vel", default_value="30.0"),
     ]

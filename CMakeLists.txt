@@ -12,6 +12,12 @@ install(PROGRAMS
   RENAME servo_joint_bridge
 )
 
+install(PROGRAMS
+  gen3_servo_control/scene_manager.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME scene_manager
+)
+
 install(DIRECTORY launch config
   DESTINATION share/${PROJECT_NAME}
 )
