@@ -1,0 +1,22 @@
+servo_joint_bridge:
+  ros__parameters:
+    input_mode: "joint"      # 'joint' or 'pose' (auto-switches on topic input)
+    control_hz: 100.0
+    gain: 1.0                # P-gain (joint vel for joint mode, linear vel for pose mode)
+    gain_angular: -1.0       # angular P-gain for pose mode (-1 = same as gain)
+    max_joint_vel: 0.5       # rad/s - max joint velocity (joint mode)
+    max_linear_vel: 0.5      # m/s   - max Cartesian linear velocity
+    max_angular_vel: 1.0     # rad/s - max Cartesian angular velocity
+    delta_threshold: 0.001   # rad   - joint error threshold (joint mode)
+    pos_threshold: 0.001     # m     - position error threshold (pose mode)
+    rot_threshold: 0.01      # rad   - rotation error threshold (pose mode)
+    base_link: "base_link"
+    tip_link: "tool_frame"
+    joint_names:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+      - joint_7
