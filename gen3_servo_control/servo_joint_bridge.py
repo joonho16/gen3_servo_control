@@ -197,6 +197,9 @@ class ServoJointBridge(Node):
         self.current_pose_pub = self.create_publisher(
             PoseStamped, '~/current_pose', 10)
 
+        # Parameter callback for runtime tuning (rqt Dynamic Reconfigure)
+        self.add_on_set_parameters_callback(self._on_params_changed)
+
         # Control loop
         self.timer = self.create_timer(1.0 / self.control_hz, self.control_loop)
 
@@ -204,6 +207,27 @@ class ServoJointBridge(Node):
             f'ServoJointBridge started: mode={self.input_mode}, '
             f'hz={self.control_hz}, gain={self.gain}, '
             f'gain_angular={self.gain_angular}')
+
+    def _on_params_changed(self, params):
+        from rcl_interfaces.msg import SetParametersResult
+        for p in params:
+            if p.name == 'gain':
+                self.gain = p.value
+            elif p.name == 'gain_angular':
+                self.gain_angular = p.value if p.value > 0 else self.gain
+            elif p.name == 'max_joint_vel':
+                self.max_joint_vel = p.value
+            elif p.name == 'max_linear_vel':
+                self.max_linear_vel = p.value
+            elif p.name == 'max_angular_vel':
+                self.max_angular_vel = p.value
+            elif p.name == 'pos_threshold':
+                self.pos_threshold = p.value
+            elif p.name == 'rot_threshold':
+                self.rot_threshold = p.value
+            elif p.name == 'delta_threshold':
+                self.delta_threshold = p.value
+        return SetParametersResult(successful=True)
 
     def _build_kdl_chain(self, urdf_string):
         try:
@@ -373,10 +397,8 @@ class ServoJointBridge(Node):
         lin_vel_base = self.gain * pos_error
         ang_vel_base = self.gain_angular * rot_err_vec
 
-        # Transform base frame twist -> tool frame twist
-        # TF quat (base->ee) rotates ee->base, so inverse (conjugate) = base->ee
+        # Transform base frame -> tool frame
         qx, qy, qz, qw = cur_quat
-        # Conjugate = inverse for unit quaternion: rotates base->tool
         lin_vel_tool = rotate_vec_by_quat(lin_vel_base, -qx, -qy, -qz, qw)
         ang_vel_tool = rotate_vec_by_quat(ang_vel_base, -qx, -qy, -qz, qw)
 

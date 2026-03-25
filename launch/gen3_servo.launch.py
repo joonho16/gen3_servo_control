@@ -17,7 +17,7 @@ import os
 import yaml
 
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, TimerAction, ExecuteProcess
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
@@ -104,7 +104,22 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    return [servo_node, bridge_node]
+    switch_controller = TimerAction(
+        period=5.0,
+        actions=[ExecuteProcess(
+            cmd=[
+                'ros2', 'service', 'call',
+                '/controller_manager/switch_controller',
+                'controller_manager_msgs/srv/SwitchController',
+                '{activate_controllers: [twist_controller], '
+                'deactivate_controllers: [joint_trajectory_controller], '
+                'strictness: 1, activate_asap: true}',
+            ],
+            output='screen',
+        )],
+    )
+
+    return [servo_node, bridge_node, switch_controller]
 
 
 def generate_launch_description():
@@ -115,11 +130,11 @@ def generate_launch_description():
         DeclareLaunchArgument("launch_rviz", default_value="true"),
         DeclareLaunchArgument("input_mode", default_value="joint"),
         DeclareLaunchArgument("control_hz", default_value="100.0"),
-        DeclareLaunchArgument("gain", default_value="1.0"),
-        DeclareLaunchArgument("gain_angular", default_value="-1.0"),
+        DeclareLaunchArgument("gain", default_value="2.0"),
+        DeclareLaunchArgument("gain_angular", default_value="25.0"),
         DeclareLaunchArgument("max_joint_vel", default_value="0.5"),
-        DeclareLaunchArgument("max_linear_vel", default_value="0.5"),
-        DeclareLaunchArgument("max_angular_vel", default_value="1.0"),
+        DeclareLaunchArgument("max_linear_vel", default_value="1.0"),
+        DeclareLaunchArgument("max_angular_vel", default_value="30.0"),
     ]
 
     # Include the official Kinova robot.launch.py (proven to work)
