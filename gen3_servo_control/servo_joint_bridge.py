@@ -189,22 +189,23 @@ class ServoJointBridge(Node):
             self.current_pose_pub.publish(pose)
 
     def goal_joint_cb(self, msg: JointState):
-        """cspace delta: position[0..6] = [dx, dy, dz, dqx, dqy, dqz, dqw]"""
+        """cspace delta: position[0..5] = [dx, dy, dz, rx, ry, rz] (rotvec, rad)"""
         result = self._get_current_ee_pose()
         if result is None:
             return
         cur_pos, cur_quat = result
 
         dx, dy, dz = msg.position[0], msg.position[1], msg.position[2]
-        dqx, dqy, dqz, dqw = msg.position[3], msg.position[4], msg.position[5], msg.position[6]
+        rx, ry, rz = msg.position[3], msg.position[4], msg.position[5]
 
         new_pos = cur_pos + np.array([dx, dy, dz])
 
-        dq_norm = math.sqrt(dqx**2 + dqy**2 + dqz**2 + dqw**2)
-        if dq_norm < 1e-6:
+        angle = math.sqrt(rx*rx + ry*ry + rz*rz)
+        if angle < 1e-6:
             new_quat = cur_quat
         else:
-            dqx, dqy, dqz, dqw = dqx/dq_norm, dqy/dq_norm, dqz/dq_norm, dqw/dq_norm
+            s = math.sin(angle / 2.0)
+            dqx, dqy, dqz, dqw = rx/angle*s, ry/angle*s, rz/angle*s, math.cos(angle / 2.0)
             cx, cy, cz, cw = cur_quat
             new_quat = [
                 dqw*cx + dqx*cw + dqy*cz - dqz*cy,
